@@ -1,8 +1,7 @@
 name: Build Docker Image with ECS Fargate 
 on:
-  push:
-    branches:
-      - main   
+  workflow_dispatch:    
+    
       
 jobs:
   build:
