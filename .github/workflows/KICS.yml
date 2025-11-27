@@ -2,11 +2,9 @@ name: Scan with KICS
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   kics-job:
@@ -22,12 +20,19 @@ jobs:
       - name: Run KICS Scan with SARIF result
         uses: checkmarx/kics-github-action@v1
         with:
-          path: '.'
-          output_path: 'results-dir'
-          output_formats: 'json,sarif'
-          fail_on: none   # don’t fail pipeline, still upload SARIF
+          path: '.'                        # Scan entire repo
+          output_path: 'results-dir'       # Directory for results
+          output_formats: 'sarif'          # Must include SARIF
+          fail_on: 'none'                  # Don’t fail pipeline, still produce SARIF
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4   # Use v4 (v3 deprecated)
         with:
           sarif_file: results-dir/results.sarif
+
+      # Optional: Upload SARIF as artifact for debugging
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kics-sarif
+          path: results-dir/results.sarif
