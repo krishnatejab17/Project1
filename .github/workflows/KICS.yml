@@ -1,4 +1,5 @@
 name: Scan with KICS
+
 on:
   push:
     branches:
@@ -10,6 +11,10 @@ on:
 jobs:
   kics-job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # Required for SARIF upload
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -20,6 +25,7 @@ jobs:
           path: '.'
           output_path: 'results-dir'
           output_formats: 'json,sarif'
+          fail_on: none   # don’t fail pipeline, still upload SARIF
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
