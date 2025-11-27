@@ -1,42 +1,27 @@
-name: KICS Scan
-
+name: Scan with KICS
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  kics-scan:
+  kics-job:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Run KICS Scan with SARIF result
+        uses: checkmarx/kics-github-action@v1
+        with:
+          path: '.'
+          output_path: 'results-dir'
+          output_formats: 'json,sarif'
 
-      # Download & install KICS correctly
-      - name: Install KICS
-        run: |
-          # Get latest version tag
-          KICS_VERSION=$(curl -s https://api.github.com/repos/Checkmarx/kics/releases/latest | grep tag_name | cut -d '"' -f 4)
-          echo "Latest version: $KICS_VERSION"
-
-          # Download the raw binary (not tar.gz)
-          curl -sL "https://github.com/Checkmarx/kics/releases/download/$KICS_VERSION/kics_linux_x64" -o kics
-          chmod +x kics
-          sudo mv kics /usr/local/bin/kics
-
-          # Verify install
-          kics version
-
-      # Run KICS Scan with SARIF output
-      - name: Run KICS scan
-        run: |
-          mkdir -p kics-results
-          kics scan -p . \
-            --report-formats sarif \
-            --output-path kics-results
-
-      # Upload SARIF to GitHub Security tab
-      - name: Upload SARIF
+      - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: kics-results/results.sarif
+          sarif_file: results-dir/results.sarif
