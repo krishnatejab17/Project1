@@ -1,0 +1,116 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: project1-repo-development-ecr
+  ECS_SERVICE: project1-repo-development-ecs-service
+  ECS_CLUSTER: project1-repo-development-cluster
+  ECS_TASK_DEFINITION: project1-repo-development-task-definition
+  CONTAINER_NAME: project1-repo-development-container
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::828411126532:role/github-actions-oidc-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
+
+      - name: build and tag docker image
+        run: |
+          IMAGE_TAG=build-${GITHUB_RUN_NUMBER}
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+          docker build -t ${{ env.ECR_REPOSITORY }}:$IMAGE_TAG .
+          docker tag ${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
+                ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG   #steps.login-ecr means login-ecr output will give registry uri
+      - name: push docker image to ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+          echo "image=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT  #this output will be used in next step
+    
+# Terraform Init/Plan/Apply
+      - name: Terraform Init
+        run: terraform init -input=false
+        working-directory: ./Terraform
+
+      - name: Terraform Plan
+        run: terraform plan -input=false -out=tfplan -var="image_tag=${{ env.IMAGE_TAG }}"
+        working-directory: ./Terraform
+
+      - name: Terraform Apply
+        run: terraform apply -input=false -auto-approve tfplan
+        working-directory: ./Terraform
+
+
+        
+       
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #   - name: Build, tag, and push image to Amazon ECR
+    #     id: build-image
+    #     env:
+    #       ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #       IMAGE_TAG: build-${GITHUB_RUN_NUMBER}
+
+    #     run: |
+    #       docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+    #       docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    #       echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    #   - name: Terraform Apply
+    #     uses: hashicorp/terraform-github-actions@v2.6.0
+    #     with:
+    #       tf_actions_version: 1.7.6
+    #       tf_working_dir: ./terraform/ecs-deployment
+    #       tf_apply_options: -var="image_tag=${{ github.sha }}" -auto-approve
+
+    #   - name: Fill in the new image ID in the Amazon ECS task definition
+    #     id: task-def
+    #     uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
+    #     with:
+    #       task-definition: ${{ env.ECS_TASK_DEFINITION }}
+    #       container-name: ${{ env.CONTAINER_NAME }}
+    #       image: ${{ steps.build-image.outputs.image }}
+
+    #   - name: Deploy Amazon ECS task definition
+    #     uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
+    #     with:
+    #       task-definition: ${{ steps.task-def.outputs.task-definition }}
+    #       service: ${{ env.ECS_SERVICE }}
+    #       cluster: ${{ env.ECS_CLUSTER }}
+    #       wait-for-service-stability: true

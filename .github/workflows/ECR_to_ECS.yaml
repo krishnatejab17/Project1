@@ -1,40 +1,30 @@
-name: Deploy ECS Service with Terraform
+# name: Deploy ECS Service with Terraform
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-env:
-  AWS_REGION: us-east-1
-  TF_VAR_image_tag: ${{ github.sha }}
+# env:
+#   AWS_REGION: us-east-1
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
+#     permissions:
+#       id-token: write
+#       contents: read
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::828411126532:role/github-actions-oidc-role
-          aws-region: ${{ env.AWS_REGION }}
+#       - name: Configure AWS credentials (OIDC)
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           role-to-assume: arn:aws:iam::828411126532:role/github-actions-oidc-role
+#           aws-region: ${{ env.AWS_REGION }}
+#           role-session-name: github-actions
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
