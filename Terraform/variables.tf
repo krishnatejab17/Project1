@@ -32,6 +32,3 @@ variable availability_zones {
 variable image_tag {
   type        = string
 }
-variable image_tag {
-  type        = string
-}

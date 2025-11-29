@@ -1,5 +1,5 @@
 resource "aws_internet_gateway" "aws-igw" {
-  vpc_id = aws_vpc.project1_vpc.id
+  vpc_id = aws_vpc.aws-vpc.id
   tags = {
     Name        = "${var.app_name}-igw"
     Environment = var.app_environment
@@ -8,7 +8,7 @@ resource "aws_internet_gateway" "aws-igw" {
 }
 
 resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.project1_vpc.id
+  vpc_id                  = aws_vpc.aws-vpc.id
   cidr_block              = element(var.public_subnets, count.index)
   availability_zone       = element(var.availability_zones, count.index)
   count                   = length(var.public_subnets)
@@ -21,7 +21,7 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.project1_vpc.id
+  vpc_id = aws_vpc.aws-vpc.id
 
   tags = {
     Name        = "${var.app_name}-routing-table-public"
