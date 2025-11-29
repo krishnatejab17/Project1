@@ -38,7 +38,8 @@ resource "aws_iam_role" "github_actions_oidc_role" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:Krishna/PROJECT:ref:refs/heads/main"
+            # 👇 This must match your repo and branch
+            "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:ref:refs/heads/main"
           }
         }
       }
@@ -48,5 +49,10 @@ resource "aws_iam_role" "github_actions_oidc_role" {
 
 resource "aws_iam_role_policy_attachment" "github_actions_oidc_policy" {
   role       = aws_iam_role.github_actions_oidc_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess" # or restrict to ECR/ECS permissions
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_ecs_policy" {
+  role       = aws_iam_role.github_actions_oidc_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonECSFullAccess"
 }
