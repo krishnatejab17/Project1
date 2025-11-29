@@ -62,7 +62,7 @@ resource "aws_iam_role" "github_actions_oidc_role" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/project1:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:ref:refs/heads/main"
           }
         }
       }
