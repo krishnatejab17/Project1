@@ -7,10 +7,9 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: project1-repo
-  IMAGE_TAG: ${{ github.sha }}
-  TF_VAR_image_tag: ${{ github.sha }}
-
-
+  IMAGE_TAG: ${{ github.sha }}:test
+  TF_VAR_image_tag: ${{ github.sha }}:test 
+  
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
