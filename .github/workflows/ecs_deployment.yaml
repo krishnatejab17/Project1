@@ -63,3 +63,10 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -input=false -auto-approve tfplan
         working-directory: ./Terraform
+
+      - name: Debug OIDC token
+        run: |
+          echo "${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" | \
+          jq -R 'split(".") | .[1] | @base64d | fromjson'
+        env:
+         ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ steps.configure-aws-credentials.outputs.id-token }}
