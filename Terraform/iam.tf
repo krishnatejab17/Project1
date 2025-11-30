@@ -32,6 +32,7 @@ resource "aws_iam_openid_connect_provider" "github" {
 }
 
 # OIDC Role for GitHub Actions
+# OIDC Role for GitHub Actions
 resource "aws_iam_role" "github_actions_oidc_role" {
   name = "github-actions-oidc-role"
 
@@ -47,14 +48,16 @@ resource "aws_iam_role" "github_actions_oidc_role" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:ref:refs/heads/main"
+          },
+          StringLike = {
+            # Change the condition to match ANY branch or tag within your repository
+            "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:*" 
           }
         }
       }
     ]
   })
 }
-
 resource "aws_iam_role_policy_attachment" "github_actions_oidc_policy" {
   role       = aws_iam_role.github_actions_oidc_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
