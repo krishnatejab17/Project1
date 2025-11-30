@@ -67,3 +67,31 @@ resource "aws_iam_role_policy_attachment" "github_actions_ecs_policy" {
   role       = aws_iam_role.github_actions_oidc_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
 }
+
+resource "aws_iam_role_policy" "github_actions_terraform_inline_policy" {
+  name = "github-actions-terraform-inline-policy"
+  role = aws_iam_role.github_actions_oidc_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowFullTerraformDeployment"
+        Effect = "Allow"
+        Action = [
+          "ec2:*",
+          "ecs:*",
+          "ecr:*",
+          "elasticloadbalancing:*",
+          "iam:PassRole",
+          "iam:GetRole",
+          "iam:ListRoles",
+          "logs:*",
+          "application-autoscaling:*",
+          "autoscaling:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
