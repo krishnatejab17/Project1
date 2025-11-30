@@ -6,7 +6,6 @@ That Docker image from ECR should then be deployed to ECS Fargate.
 And the deployed service should have a load balancer. 
 When I hit the load balancer DNS, it should respond with 'welcome'.
 
-#automation#
 
 
 
