@@ -23,7 +23,7 @@ resource "aws_ecs_task_definition" "aws_ecs_task" {
     "portMappings": [
       {
         "containerPort": 8080,
-        "hostPort": 8080
+        "protocol": "tcp"
       }
     ]
   }
@@ -35,13 +35,19 @@ DEFINITION
 resource "aws_ecs_service" "aws_ecs_service" {
   name            = "${var.app_name}-${var.app_environment}-ecs-service"
   cluster         = aws_ecs_cluster.aws_ecs_cluster.id
-  task_definition = "${aws_ecs_task_definition.aws_ecs_task.family}:${aws_ecs_task_definition.aws_ecs_task.revision}"
+  task_definition = aws_ecs_task_definition.aws_ecs_task.arn 
   desired_count   = 1
   launch_type     = "FARGATE"
 
   network_configuration {
     subnets         = aws_subnet.public[*].id
-    security_groups = [aws_security_group.service_security_group.id, aws_security_group.load_balancer_security_group.id]
+    security_groups = [aws_security_group.service_security_group.id]
     assign_public_ip = true
   }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.target_group.arn
+    container_name   = "${var.app_name}-${var.app_environment}-container"
+    container_port   = 8080
+  }
+  depends_on = [aws_lb_listener.listener]
 }

@@ -7,7 +7,7 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
     Name        = "project1-iam-role"
     Environment = "development"
   }
-}
+} 
 
 data "aws_iam_policy_document" "assume_role_policy" {
   statement {

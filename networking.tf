@@ -1,5 +1,14 @@
+resource "aws_vpc" "main" {
+  cidr_block           = "10.10.0.0/24"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  tags = {
+    Name = "${var.app_name}-vpc"
+    Environment = var.app_environment
+  }
+}
 resource "aws_internet_gateway" "aws-igw" {
-  vpc_id = aws_vpc.aws-vpc.id
+  vpc_id = aws_vpc.main.id
   tags = {
     Name        = "${var.app_name}-igw"
     Environment = var.app_environment
@@ -8,10 +17,10 @@ resource "aws_internet_gateway" "aws-igw" {
 }
 
 resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.aws-vpc.id
+  count                   = length(var.public_subnets)
+  vpc_id                  = aws_vpc.main.id
   cidr_block              = element(var.public_subnets, count.index)
   availability_zone       = element(var.availability_zones, count.index)
-  count                   = length(var.public_subnets)
   map_public_ip_on_launch = true
 
   tags = {
@@ -21,7 +30,7 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.aws-vpc.id
+  vpc_id = aws_vpc.main.id
 
   tags = {
     Name        = "${var.app_name}-routing-table-public"
