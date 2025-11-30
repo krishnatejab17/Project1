@@ -1,3 +1,4 @@
+# ECS Task Execution Role
 resource "aws_iam_role" "ecsTaskExecutionRole" {
   name               = "${var.app_name}-execution-task-role"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
@@ -24,24 +25,14 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# -----------------------------
-# GITHUB OIDC PROVIDER
-# -----------------------------
+# GitHub OIDC Provider
 resource "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
-
-  client_id_list = [
-    "sts.amazonaws.com"
-  ]
-
-  thumbprint_list = [
-    "1c7e6ac6f2d8a4a4d19f0a2cd5c9b9b1e6f8d444" # updated GitHub OIDC thumbprint
-  ]
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["1c7e6ac6f2d8a4a4d19f0a2cd5c9b9b1e6f8d444"]
 }
 
-# -----------------------------
-# OIDC ROLE FOR GITHUB ACTIONS
-# -----------------------------
+# OIDC Role for GitHub Actions
 resource "aws_iam_role" "github_actions_oidc_role" {
   name = "github-actions-oidc-role"
 
@@ -57,7 +48,6 @@ resource "aws_iam_role" "github_actions_oidc_role" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            # must match exactly (case-sensitive)
             "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:ref:refs/heads/main"
           }
         }
@@ -73,35 +63,5 @@ resource "aws_iam_role_policy_attachment" "github_actions_oidc_policy" {
 
 resource "aws_iam_role_policy_attachment" "github_actions_ecs_policy" {
   role       = aws_iam_role.github_actions_oidc_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonECSFullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
 }
-
-
-
-# resource "aws_iam_openid_connect_provider" "github" {
-#   url             = "https://token.actions.githubusercontent.com"
-#   client_id_list  = ["sts.amazonaws.com"]
-#   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
-# }
-# resource "aws_iam_role" "github_actions_role" {
-#   name = "github-actions-oidc-role"
-
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Principal = {
-#           Federated = aws_iam_openid_connect_provider.github.arn
-#         }
-#         Action = "sts:AssumeRoleWithWebIdentity"
-#         Condition = {
-#           StringEquals = {
-#             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-#             "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:ref:refs/heads/main"
-#           }
-#         }
-#       }
-#     ]
-#   })
-# }
