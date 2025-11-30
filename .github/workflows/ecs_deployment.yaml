@@ -73,7 +73,7 @@ jobs:
         working-directory: ./Terraform
 
       - name: Terraform Plan
-        run: terraform plan -input=false -out=tfplan -var-file="Terraform.tfvars" -var="image_tag=${{ env.IMAGE_TAG }}"
+        run: terraform plan -input=false -out=tfplan -var-file="terraform.tfvars" -var="image_tag=${{ env.IMAGE_TAG }}"
         working-directory: ./Terraform
 
       - name: Terraform Apply
