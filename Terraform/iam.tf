@@ -95,3 +95,32 @@ resource "aws_iam_role_policy" "github_actions_terraform_inline_policy" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "github_actions_terraform_full_permissions" {
+  name = "github-actions-terraform-full-permissions"
+  role = aws_iam_role.github_actions_oidc_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:*",
+          "ecr:*",
+          "ecs:*",
+          "elasticloadbalancing:*",
+          "iam:*",
+          "logs:*",
+          "application-autoscaling:*",
+          "autoscaling:*",
+          "route53:*",
+          "events:*",
+          "servicediscovery:*",
+          "tag:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
