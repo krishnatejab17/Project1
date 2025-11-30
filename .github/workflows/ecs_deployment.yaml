@@ -69,13 +69,13 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: ./Terraform
+        working-directory: Terraform
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: ./Terraform
+        working-directory: Terraform
         run: terraform plan -input=false -out=tfplan -var-file="terraform.tfvars" -var="image_tag=${{ env.IMAGE_TAG }}"
 
       - name: Terraform Apply
-        working-directory: ./Terraform
+        working-directory: Terraform
         run: terraform apply -input=false -auto-approve tfplan
