@@ -1,9 +1,9 @@
-###############################################
+############################################################
 # ECS Task Execution Role
-###############################################
+############################################################
 resource "aws_iam_role" "ecsTaskExecutionRole" {
   name               = "project1-execution-task-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
+  assume_role_policy = data.aws_iam_policy_document.ecs_assume.json
 
   tags = {
     Name        = "project1-iam-role"
@@ -11,7 +11,7 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
   }
 }
 
-data "aws_iam_policy_document" "assume_role_policy" {
+data "aws_iam_policy_document" "ecs_assume" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
@@ -26,18 +26,18 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-###############################################
-# GitHub OIDC Provider
-###############################################
+############################################################
+# GitHub Actions OIDC Identity Provider
+############################################################
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
-###############################################
+############################################################
 # GitHub Actions OIDC Role
-###############################################
+############################################################
 resource "aws_iam_role" "github_actions_oidc_role" {
   name = "github-actions-oidc-role"
 
@@ -55,7 +55,7 @@ resource "aws_iam_role" "github_actions_oidc_role" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           },
           StringLike = {
-            # IMPORTANT — must match your repo!
+            # IMPORTANT: repo must match exactly
             "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:*"
           }
         }
@@ -64,69 +64,79 @@ resource "aws_iam_role" "github_actions_oidc_role" {
   })
 }
 
-###############################################
-# Single Combined Policy (clean + correct)
-###############################################
+############################################################
+# Combined GitHub Actions Policy (ALL NEEDED PERMISSIONS)
+############################################################
 resource "aws_iam_policy" "github_actions_policy_combined" {
   name        = "github-actions-combined-policy"
-  description = "Full permissions required for Terraform + ECS/ECR deployment"
+  description = "Complete permissions for Terraform backend + ECS + ECR deployment"
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
 
-      #########################################
-      # 🔥 FULL S3 ACCESS (Fixes all 403 errors)
-      #########################################
+      ##################################################
+      # 🔥 FULL S3 ACCESS (Terraform backend)
+      ##################################################
       {
         Effect = "Allow",
         Action = "s3:*",
         Resource = "*"
       },
 
-      #########################################
-      # ECR Full Access
-      #########################################
+      ##################################################
+      # IAM READ ACCESS (Fixes ListRolePolicies / Get*)
+      ##################################################
+      {
+        Effect = "Allow",
+        Action = [
+          "iam:Get*",
+          "iam:List*"
+        ],
+        Resource = "*"
+      },
+
+      ##################################################
+      # ECR Access (push images)
+      ##################################################
       {
         Effect = "Allow",
         Action = "ecr:*",
         Resource = "*"
       },
 
-      #########################################
-      # ECS Full Access
-      #########################################
+      ##################################################
+      # ECS Access (deploy new task definitions)
+      ##################################################
       {
         Effect = "Allow",
         Action = "ecs:*",
         Resource = "*"
       },
 
-      #########################################
-      # Allow IAM PassRole (needed for ECS)
-      #########################################
+      ##################################################
+      # iam:PassRole for ECS tasks
+      ##################################################
       {
         Effect = "Allow",
         Action = [
-          "iam:PassRole",
-          "iam:GetRole",
-          "iam:ListRoles"
+          "iam:PassRole"
         ],
         Resource = "*"
       },
 
-      #########################################
+      ##################################################
       # CloudWatch Logs
-      #########################################
+      ##################################################
       {
         Effect = "Allow",
         Action = "logs:*",
         Resource = "*"
       },
 
-      #########################################
-      # VPC / Networking / Load Balancer
-      #########################################
+      ##################################################
+      # VPC, Subnets, SG, ELB, Autoscaling (Terraform needs all)
+      ##################################################
       {
         Effect = "Allow",
         Action = [
@@ -141,9 +151,9 @@ resource "aws_iam_policy" "github_actions_policy_combined" {
   })
 }
 
-###############################################
-# Attach final combined policy
-###############################################
+############################################################
+# Attach Combined Policy to OIDC Role
+############################################################
 resource "aws_iam_role_policy_attachment" "combined_attach" {
   role       = aws_iam_role.github_actions_oidc_role.name
   policy_arn = aws_iam_policy.github_actions_policy_combined.arn
