@@ -83,27 +83,13 @@ resource "aws_iam_policy" "github_actions_policy" {
           "s3:PutObject",
           "s3:DeleteObject",
           "s3:ListBucket",
+          "s3:GetBucketPolicy", 
           "s3:GetBucketLocation"
         ]
         Resource = [
           "arn:aws:s3:::project1-terraform-state-bucket",
           "arn:aws:s3:::project1-terraform-state-bucket/project1/*"
         ]
-      },
-
-      # -------------------------
-      # DynamoDB Lock Table
-      # -------------------------
-      {
-        Sid    = "AllowDynamoDBStateLocking"
-        Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:GetItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:UpdateItem"
-        ]
-        Resource = "arn:aws:dynamodb:us-east-1:828411126532:table/project1-terraform-locks"
       },
 
       # -------------------------
