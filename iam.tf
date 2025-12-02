@@ -1,20 +1,25 @@
 ##############################################
-# GitHub OIDC Provider + Role
+# OIDC provider for GitHub Actions
 ##############################################
 
-# OIDC provider for GitHub Actions
 resource "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 
+  # The client ID must be "sts.amazonaws.com" to allow role assumption via OIDC
   client_id_list = ["sts.amazonaws.com"]
 
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"] # GitHub OIDC CA thumbprint
+  # GitHub's CA thumbprint (this is correct as of now, but always verify)
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
+##############################################
 # IAM Role for GitHub Actions (OIDC)
+##############################################
+
 resource "aws_iam_role" "github_actions_oidc_role" {
   name = "github-actions-oidc-role"
 
+  # Trust relationship for GitHub Actions to assume the role
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -26,7 +31,7 @@ resource "aws_iam_role" "github_actions_oidc_role" {
         Action = "sts:AssumeRoleWithWebIdentity",
         Condition = {
           StringEquals = {
-            # Replace with your actual GitHub repo and branch
+            # Ensure this is your correct GitHub repository and branch
             "token.actions.githubusercontent.com:sub" = "repo:krishnatejab17/Project1:ref:refs/heads/main"
           }
         }
@@ -75,7 +80,7 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_custom" {
 }
 
 ##############################################
-# Custom Combined Policy
+# Custom Combined Policy for GitHub Actions
 ##############################################
 
 resource "aws_iam_policy" "github_actions_policy_combined" {
