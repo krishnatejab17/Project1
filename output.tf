@@ -10,5 +10,5 @@ output "ecr_repository_url" {
 
 
 output "route53_nameservers" {
-  value       = aws_route53_zone.main.name_servers
+  value = aws_route53_zone.main.name_servers
 }

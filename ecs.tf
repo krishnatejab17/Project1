@@ -37,13 +37,13 @@ DEFINITION
 resource "aws_ecs_service" "aws_ecs_service" {
   name            = "${var.app_name}-${var.app_environment}-ecs-service"
   cluster         = aws_ecs_cluster.aws_ecs_cluster.id
-  task_definition = aws_ecs_task_definition.aws_ecs_task.arn 
+  task_definition = aws_ecs_task_definition.aws_ecs_task.arn
   desired_count   = 1
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.public[*].id
-    security_groups = [aws_security_group.service_security_group.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.service_security_group.id]
     assign_public_ip = true
   }
   load_balancer {
