@@ -37,6 +37,7 @@ resource "aws_iam_role" "github_actions_oidc_role" {
   })
 }
 
+# Attach policy to GitHub OIDC Role
 resource "aws_iam_role_policy_attachment" "combined_attach" {
   role       = aws_iam_role.github_actions_oidc_role.name
   policy_arn = aws_iam_policy.github_actions_policy_combined.arn
@@ -53,8 +54,8 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action = "sts:AssumeRole",
         Effect = "Allow",
+        Action = "sts:AssumeRole",
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         }
@@ -63,44 +64,76 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
   })
 }
 
+# Attach AWS managed ECS execution policy
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_policy" {
   role       = aws_iam_role.ecsTaskExecutionRole.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Attach custom policy to ECS task execution role
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionRole_custom" {
   role       = aws_iam_role.ecsTaskExecutionRole.name
   policy_arn = aws_iam_policy.github_actions_policy_combined.arn
 }
 
 ##############################################
-# Custom Combined Policy for GitHub Actions
+# Custom IAM Policy (GitHub Actions)
 ##############################################
 
 resource "aws_iam_policy" "github_actions_policy_combined" {
   name        = "github-actions-combined-policy"
-  description = "Complete permissions for Terraform backend + ECS + ECR deployment"
+  description = "Complete permissions for Terraform backend + ECS + ECR + Route53 + ACM deployment"
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
 
-      { Effect = "Allow", Action = "s3:*", Resource = "*" },
-
+      # S3 (Terraform backend)
       {
         Effect   = "Allow",
-        Action   = ["iam:Get*", "iam:List*"],
+        Action   = "s3:*",
         Resource = "*"
       },
 
-      { Effect = "Allow", Action = "ecr:*", Resource = "*" },
+      # IAM (read-only)
+      {
+        Effect = "Allow",
+        Action = [
+          "iam:Get*",
+          "iam:List*"
+        ],
+        Resource = "*"
+      },
 
-      { Effect = "Allow", Action = "ecs:*", Resource = "*" },
+      # ECR
+      {
+        Effect   = "Allow",
+        Action   = "ecr:*",
+        Resource = "*"
+      },
 
-      { Effect = "Allow", Action = ["iam:PassRole"], Resource = "*" },
+      # ECS
+      {
+        Effect   = "Allow",
+        Action   = "ecs:*",
+        Resource = "*"
+      },
 
-      { Effect = "Allow", Action = "logs:*", Resource = "*" },
+      # PassRole (required by ECS tasks)
+      {
+        Effect   = "Allow",
+        Action   = ["iam:PassRole"],
+        Resource = "*"
+      },
 
+      # CloudWatch Logs
+      {
+        Effect   = "Allow",
+        Action   = "logs:*",
+        Resource = "*"
+      },
+
+      # Networking + Load Balancers + Autoscaling
       {
         Effect = "Allow",
         Action = [
@@ -112,17 +145,30 @@ resource "aws_iam_policy" "github_actions_policy_combined" {
         Resource = "*"
       },
 
+      # Route53
       {
         Effect = "Allow",
         Action = [
           "route53:ListHostedZones",
           "route53:GetHostedZone",
           "route53:ListResourceRecordSets",
-          "route53:ChangeResourceRecordSets"
+          "route53:ChangeResourceRecordSets",
+          "route53:ListTagsForResource"
+        ],
+        Resource = "*"
+      },
+
+      # ACM
+      {
+        Effect = "Allow",
+        Action = [
+          "acm:DescribeCertificate",
+          "acm:ListCertificates",
+          "acm:ListTagsForCertificate",
+          "acm:GetCertificate"
         ],
         Resource = "*"
       }
     ]
   })
 }
-    
